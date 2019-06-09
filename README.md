@@ -28,8 +28,8 @@ Dans ce travail de laboratoire, vous allez configurer des routeurs Cisco émulé
 -	Capture Sniffer avec filtres précis sur la communication à épier
 -	Activation du mode « debug » pour certaines fonctions du routeur
 -	Observation des protocoles IPSec
- 
- 
+
+
 ## Matériel
 
 La manière la plus simple de faire ce laboratoire est dans les machines des salles de labo. Le logiciel d'émulation c'est eve-ng. Vous trouverez un [guide très condensé](files/Fonctionnement_EVE-NG.pdf) pour l'utilisation de eve-ng ici.
@@ -92,7 +92,7 @@ Un « protocol » différent de `up` indique la plupart du temps que l’interfa
 
 ---
 
-**Réponse :**  
+**Réponse :**  Non, nous n'avons pas rencontré de problème car la configuration était déjà présente
 
 ---
 
@@ -131,6 +131,11 @@ Pour votre topologie il est utile de contrôler la connectivité entre :
 
 **Réponse :**  
 
+- R1 vers ISP1 (193.100.100.254) : Oui tous les pings ont passés.
+- R2 vers ISP2 (193.200.200.254) : Oui tous les pings ont passés.
+- R2 (193.200.200.1) vers RX1 (193.100.100.1) via Internet : Oui tous les pings ont passés.
+- R2 (172.17.1.1) et votre poste « VPC » : Oui tous les pings ont passés.
+
 ---
 
 - Activation de « debug » et analyse des messages ping.
@@ -147,12 +152,11 @@ Pour déclencher et pratiquer les captures vous allez « pinger » votre routeur
 -	Une trace sniffer (Wireshark) à la sortie du routeur R2 vers Internet. Si vous ne savez pas utiliser Wireshark avec eve-ng, référez-vous au document explicatif eve-ng. Le filtre de **capture** (attention, c'est un filtre de **capture** et pas un filtre d'affichage) suivant peut vous aider avec votre capture : `ip host 193.100.100.1`. 
 -	Les messages de R1 avec `debug ip icmp`.
 
-
-**Question 3: Montrez vous captures**
+**Question 3: Montrez vos captures**
 
 ---
 
-**Screenshots :**  
+**Screenshots :**  Pour le debug, nous avons pas pu observer de réponse de la part de R1 au niveau du R2.
 
 ---
 
@@ -225,14 +229,38 @@ Vous pouvez consulter l’état de votre configuration IKE avec les commandes su
 
 **Réponse :**  
 
----
+Nous pouvons remarquer que les parmètres établis ont bien été appliqués. 
 
+Nous pouvons remarquer pour la priority 10 que: 
+
+- l'algorithme d'encryption est le "Three key triple DES"
+- l'algorithme de hash est MD5,
+- l'authentification methode est basée sur une clé partagée.
+- il fait partie du groupe 2 pour Diggie-Hellman
+- La durée de vie est de 1800 secondes, qui est égale à 30min.
+
+Nous pouvons remarquer pour la priority 20 que: 
+
+- l'algorithme d'encryption AES256
+- l'algorithme de hash est Secure Hash Standard
+- il fait partie du groupe 5 pour Diggie-Hellman
+- La durée de vie est de 1800 secondes, qui est égale à 30min.
+
+![](./images/crypto_show_pol.PNG)
+
+---
 
 **Question 5: Utilisez la commande `show crypto isakmp key` et faites part de vos remarques :**
 
 ---
 
 **Réponse :**  
+
+Nous pouvons remarquer que les clés sont identiques car elles sont partagées : 
+
+![](./images/key_r1.PNG)
+
+![](./images/key_r2.PNG)
 
 ---
 
@@ -325,7 +353,10 @@ Pensez à démarrer votre sniffer sur la sortie du routeur R2 vers internet avan
 
 ---
 
-**Réponse :**  
+**Réponse :**  Nous pouvons remarquer que les configurations sont presques identique. Il y a deux méthodes disponibles: 
+
+- esp-aes pour le chiffrement et esp-sha-hmac
+- esp-aes-192 et égaelement esp-sha-hmac (utilisée pour la communication)
 
 ---
 
@@ -334,6 +365,9 @@ Pensez à démarrer votre sniffer sur la sortie du routeur R2 vers internet avan
 ---
 
 **Réponse :**  
+
+- Le timer de IKE (1800 secondes ) représente la négociation et la durée de vie du tunnel.
+- Le timer de IPSec (900) représente la deuxième phase de négociation. Cette dernière est incluse dans IKE.
 
 ---
 
@@ -347,7 +381,7 @@ En vous appuyant sur les notions vues en cours et vos observations en laboratoir
 
 ---
 
-**Réponse :**  
+**Réponse :**  Les types de protocoles sont ESP et IKE. 
 
 ---
 
@@ -356,33 +390,30 @@ En vous appuyant sur les notions vues en cours et vos observations en laboratoir
 
 ---
 
-**Réponse :**  
+**Réponse :**  Le mode utilisé est le mode tunnel.
 
 ---
-
 
 **Question 10: Expliquez quelles sont les parties du paquet qui sont chiffrées. Donnez l’algorithme cryptographique correspondant.**
 
 ---
 
-**Réponse :**  
+**Réponse :**  Vu que c'est en mode tunnel, tout le paquet est chiffré et une nouvelle en⁻tête est ajoutée. L'algorithme utilisé est AES basé sur 192 bits.
 
 ---
-
 
 **Question 11: Expliquez quelles sont les parties du paquet qui sont authentifiées. Donnez l’algorithme cryptographique correspondant.**
 
 ---
 
-**Réponse :**  
+**Réponse :**  L'intégralité du paquet est authentifiée avec l'algorithme cryptographique **esp-sha-hmac**.
 
 ---
-
 
 **Question 12: Expliquez quelles sont les parties du paquet qui sont protégées en intégrité. Donnez l’algorithme cryptographique correspondant.**
 
 ---
 
-**Réponse :**  
+**Réponse :**  L'algorithme **esp-sha-hmac** est aussi utilisé afin de garantir l'intégrité du paquet. De ce fait, l'algorithme vérifie l'intégrité de l'ensemble du paquet.
 
 ---
